@@ -100,10 +100,15 @@ def main():
         st.session_state.blocks = generate_blocks()
         st.session_state.score = 0
         st.session_state.selected_block = None
+        st.session_state.game_over = False
 
-    st.write(draw_board(st.session_state.board), unsafe_allow_html=True)
-    st.write(draw_blocks(st.session_state.blocks), unsafe_allow_html=True)
-    st.write(f"Score: {st.session_state.score}")
+    board_display = st.empty()
+    blocks_display = st.empty()
+    score_display = st.empty()
+
+    board_display.write(draw_board(st.session_state.board), unsafe_allow_html=True)
+    blocks_display.write(draw_blocks(st.session_state.blocks), unsafe_allow_html=True)
+    score_display.write(f"Score: {st.session_state.score}")
 
     col1, col2 = st.columns(2)
 
@@ -115,20 +120,27 @@ def main():
     block_num = st.radio("Select Block", options=range(1, len(st.session_state.blocks) + 1)) - 1
 
     if st.button("Place Block"):
-        if can_place_block(st.session_state.board, st.session_state.blocks[block_num], row, col):
-            place_block(st.session_state.board, st.session_state.blocks[block_num], row, col)
-            cleared = clear_lines(st.session_state.board)
-            st.session_state.score += cleared * 10
-            st.session_state.blocks.pop(block_num)
-            if check_game_over(st.session_state.board, st.session_state.blocks):
-                st.write("Game Over!")
-                st.session_state.board = create_blockudoku_board()
-                st.session_state.blocks = generate_blocks()
-                st.session_state.score = 0
+        if not st.session_state.game_over:
+            if can_place_block(st.session_state.board, st.session_state.blocks[block_num], row, col):
+                place_block(st.session_state.board, st.session_state.blocks[block_num], row, col)
+                cleared = clear_lines(st.session_state.board)
+                st.session_state.score += cleared * 10
+                st.session_state.blocks.pop(block_num)
+                if check_game_over(st.session_state.board, st.session_state.blocks):
+                    st.write("Game Over!")
+                    st.session_state.board = create_blockudoku_board()
+                    st.session_state.blocks = generate_blocks()
+                    st.session_state.score = 0
+                    st.session_state.game_over = True
+                else:
+                    board_display.write(draw_board(st.session_state.board), unsafe_allow_html=True)
+                    blocks_display.write(draw_blocks(st.session_state.blocks), unsafe_allow_html=True)
+                    score_display.write(f"Score: {st.session_state.score}")
+
             else:
-                st.experimental_rerun()
+                st.error("Cannot place block here")
         else:
-            st.error("Cannot place block here")
+            st.write("Game is over. Please restart.")
 
 if __name__ == "__main__":
     main()
